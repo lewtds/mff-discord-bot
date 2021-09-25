@@ -16,9 +16,10 @@ function matchHopAmChuanSongUrl(url: string) {
 
 async function getHopAmChuanSongText(songUrl: string, transposition: number): Promise<SongText> {
     const browser = await getPuppetBrowser();
+    let page = null;
 
     try {
-        const page = await browser.newPage();
+        page = await browser.newPage();
         await page.goto(songUrl);
 
         if (transposition !== 0) {
@@ -37,7 +38,9 @@ async function getHopAmChuanSongText(songUrl: string, transposition: number): Pr
             transposition: transposition,
         }
     } finally {
-        await browser.close();
+        if (page) {
+            await page.close();
+        }
     }
 }
 
