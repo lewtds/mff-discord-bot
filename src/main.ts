@@ -9,7 +9,7 @@ import { getPuppetBrowser, ResolverModule } from "./resolver";
 
 const wait = promisify(setTimeout);
 
-const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const client = new Client({intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES]});
 
 client.once('ready', async () => {
     console.log('Connection to Discord ready!');
@@ -25,7 +25,7 @@ const RESOLVERS = [
 
 const BOT_COMMAND_REGEXP = /^!mff (.+)/;
 
-client.on('messageCreate', async function(message) {
+client.on('messageCreate', async function (message) {
     const commandMatch = BOT_COMMAND_REGEXP.exec(message.content);
     if (!commandMatch) return;
 
@@ -41,7 +41,24 @@ client.on('messageCreate', async function(message) {
     // Then search by keyword
     // TODO parallelize this when we have multiple resolvers. Also think about ranking and stuff.
     for (const resolver of RESOLVERS) {
+        await message.channel.sendTyping();
+        let candidates = (await resolver.searchSongs(commandText)).slice(0, 3);
 
+        const embeddedReply = new MessageEmbed()
+            .addFields(candidates.map(c => ({
+                name: `[${c.source}] ${c.title} - ${c.artists.join(', ')}`,
+                value: c.preview
+            })));
+
+
+        const reply = await message.reply({embeds: [embeddedReply]});
+
+        const promises = candidates.map((c, index) => {
+            const numberEmojis = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
+            return reply.react(numberEmojis[index]);
+        });
+
+        await Promise.all(promises);
     }
 });
 
@@ -52,7 +69,7 @@ async function handleSongDirectMatch(message: Message, resolver: ResolverModule,
 
     const reply = new MessageEmbed()
         .setTitle(songText.title)
-        .setAuthor(songText.artist)
+        .setAuthor(songText.artists.join(', '))
         // TODO Discord has a limit of 2000 chars. What to do with longer songs?
         .setDescription(songText.text.substring(0, 2000))
         .addField('Transpose', songText.transposition.toString());

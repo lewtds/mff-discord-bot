@@ -32,7 +32,7 @@ async function getHopAmChuanSongText(songUrl: string, transposition: number): Pr
 
         return {
             title: title,
-            artist: artist,
+            artists: [artist],
             text: text,
             // TODO wrap around?
             transposition: transposition,
@@ -50,6 +50,35 @@ async function transpose(page: Page, transposition: number) {
     await transposeButton?.click({clickCount: transposition});
 }
 
-async function searchSongs(): Promise<SearchCandidate[]> {
-    return [];
+async function searchSongs(keyword: string): Promise<SearchCandidate[]> {
+    const browser = await getPuppetBrowser();
+
+    const page = await browser.newPage();
+    await page.goto(`https://hopamchuan.com/search?q=${encodeURIComponent(keyword)}`);
+
+    return await page.$$eval('#page-content .song-item', function (elems) {
+        const results: SearchCandidate[] = [];
+
+        for (const elem of elems) {
+            let title = (elem.querySelector('.song-title-singers .song-title') as HTMLElement)?.innerText;
+            let artistElems = (elem.querySelectorAll('.song-title-singers .author-item'));
+
+            const artists: string[] = [];
+
+            artistElems.forEach(function(el) {
+                artists.push((el as HTMLElement).innerText);
+            });
+
+            let preview = (elem.querySelector('.song-preview-lyric') as HTMLElement)?.innerText;
+
+            results.push({
+                title,
+                artists: artists,
+                preview,
+                source: 'hopamchuan'
+            });
+        }
+
+        return results;
+    });
 }

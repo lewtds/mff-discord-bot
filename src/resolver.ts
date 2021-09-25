@@ -8,14 +8,14 @@ export interface ResolverModule {
 
 export interface SearchCandidate {
     title: string,
-    artist: string,
+    artists: string[],
     preview: string,
-    // ranking? confidence?
+    source: string,
 }
 
 export interface SongText {
     title: string;
-    artist: string;
+    artists: string[];
     text: string;
     transposition: number;
 }
