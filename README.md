@@ -1,3 +1,5 @@
+Requires NodeJS >= 16.6.0.
+
 ```bash
 cp .env-example .env
 npm install
